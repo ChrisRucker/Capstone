@@ -1,0 +1,59 @@
+---
+title: "Data Science Capstone"
+author: "Chris Rucker"
+date: "March 29, 2015"
+output: html_document
+---
+<h2>Exploratory Data Analysis</h2>
+
+<p>The purpose of this document is to present the first advance in the Data Science Capstone project. This advance, or milestone report, should cover basic exploratory data analysis and an overview of the project’s goal of creating a text prediction solution.</p>
+
+<h4>Basic summaries of the three files:</h4>
+    <ul>
+    <li>word counts</li>
+    <li>line counts</li> 
+    <li>basic data tables</li>
+    </ul>
+
+```{r, echo=FALSE}
+require(knitr)
+blogs <- readLines("en_US.blogs.txt") # line count
+news <- readLines("en_US.news.txt") # line count
+twitter <- readLines("en_US.twitter.txt") # line count
+
+df.features <- data.frame(
+    filename=c("blogs","news","twitter"),
+    size.in.MB=c(round(object.size(blogs)/(1024*1024),1),round(object.size(news)/(1024*1024),1),round(object.size(twitter)/(1024*1024),1)),
+    TotalLines=c(length(blogs),length(news),length(twitter)),
+    TotalCharacters=c(sum(nchar(blogs)),sum(nchar(news)),sum(nchar(twitter))),
+    CharactresPerLine=c(round(mean(nchar(blogs)),2),round(mean(nchar(news)),2),round(mean(nchar(twitter)),2)),
+    TotalWords=c(sum(stringi::stri_count_words(blogs)),sum(stringi::stri_count_words(news)),sum(stringi::stri_count_words(twitter)))                  
+) # create data frame
+
+df.features$wordsPerLine <- round(df.features$TotalWords/df.features$TotalLines,2) # round numbers
+
+install.packages("gridExtra") # install package
+library(gridExtra) # require package
+
+grid.table(df.features, gp=gpar(fontsize=8)) # create grid
+```
+
+<h4>Basic plots to illustrate features of the data:</h4>
+    <ul><li>histograms</li></ul>
+
+```{r, echo=FALSE}
+par(mfrow = c(1,3)) # combine histograms
+barplot(df.features$size.in.MB,names=df.features$filename, xlab="file size in MB") # plot histogram
+barplot(df.features$TotalLines,names=df.features$filename, xlab="line counts") # plot histogram
+barplot(df.features$wordsPerLine,names=df.features$filename, xlab="word counts") # plot histogram
+```
+
+<h2>Prediction Algorithm</h2>
+<h4>Goals:</h4>
+    <ul>
+    <li>Pass the word to be predicted on (last word typed) and the one immediately before it (antecedent).</li>
+    <li>Filter out any twitter, blog, or news that doesn’t contain the word being predicted.</li> 
+    <li>Consolidate the remaining texts into a single corpus.</li>
+    <li>Try to get a prediction for the next word using 3grams where the 1st word is the antecedent and the 2nd word is the last word typed.</li>
+    <li>If no such 3gram exists, use 2grams where the 1st word is the last word typed to do the prediction.</li>
+    </ul>
